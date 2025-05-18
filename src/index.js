@@ -1,7 +1,9 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors'); // ✅ Import CORS
-const connectDB = require('../config/db'); 
+const cors = require('cors');
+const connectDB = require('../config/db');
+
+// Route files
 const usersRouter = require('../routes/users');
 const classRouter = require('../routes/class');
 const attendanceRouter = require('../routes/attendance');
@@ -9,11 +11,23 @@ const attendanceRouter = require('../routes/attendance');
 const app = express();
 const port = process.env.PORT || 3000;
 
-connectDB(); 
+// Connect to database
+connectDB();
 
-// ✅ Enable CORS for all origins (or specify just localhost for dev)
+// ✅ CORS Setup (for local dev and deployed frontend)
+const allowedOrigins = [
+  "http://localhost:5173", // Local dev
+  "https://attendence-management-system-teuy.onrender.com" // Deployed frontend
+];
+
 app.use(cors({
-  origin: "http://localhost:5173", // ✅ Use your frontend dev URL
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, etc.)
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    callback(new Error("Not allowed by CORS"));
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true
 }));
@@ -27,18 +41,18 @@ app.use('/api/users', usersRouter);
 app.use('/api/class', classRouter);
 app.use('/api/attendance', attendanceRouter);
 
-// Basic route
+// Root route
 app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to the Node.js application!' });
+  res.json({ message: '✅ Backend API is up and running!' });
 });
 
-// Error handling middleware
+// Global error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong!' });
+  console.error("❌ Error:", err.stack);
+  res.status(500).json({ message: err.message || 'Internal Server Error' });
 });
 
 // Start server
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  console.log(`🚀 Server running on port ${port}`);
 });
